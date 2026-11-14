@@ -1,0 +1,16 @@
+/favicon.ico
+  Cache-Control: public, max-age=0, must-revalidate
+/hz-med-icon-32.png
+  Cache-Control: public, max-age=0, must-revalidate
+/hz-med-icon-64.png
+  Cache-Control: public, max-age=0, must-revalidate
+/hz-med-icon-180.png
+  Cache-Control: public, max-age=0, must-revalidate
+/hz-med-icon-192.png
+  Cache-Control: public, max-age=0, must-revalidate
+/hz-med-icon-512.png
+  Cache-Control: public, max-age=0, must-revalidate
+/hz-med-icon.png
+  Cache-Control: public, max-age=0, must-revalidate
+/manifest.webmanifest
+  Cache-Control: public, max-age=0, must-revalidate

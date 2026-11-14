@@ -1,0 +1,15 @@
+{
+  "id": "/",
+  "name": "HZ MED - Banco de Questões",
+  "short_name": "HZ MED",
+  "description": "Plataforma pessoal de estudos e simulados médicos.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#080817",
+  "theme_color": "#080817",
+  "icons": [
+    {"src": "/hz-med-icon-192.png?v=20261023-4", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/hz-med-icon-512.png?v=20261023-4", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}
