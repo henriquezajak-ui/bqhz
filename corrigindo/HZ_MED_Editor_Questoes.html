@@ -195,6 +195,72 @@
     </div>
   </section>
 </div>
+<div id="questionEditModal" class="hidden fixed inset-0 z-[1000] bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+  <div class="panel w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl" style="background:#171725;border:1px solid #3c3c58">
+    <div class="flex items-center justify-between gap-3 p-4 md:p-5 border-b" style="border-color:var(--line)">
+      <div class="min-w-0">
+        <div id="editModalTitle" class="text-lg md:text-xl font-black truncate">Editar Questão</div>
+        <div id="editModalSubtitle" class="tiny muted truncate mt-0.5">Banco de Dados · Gerenciamento</div>
+      </div>
+      <button type="button" id="editModalClose" class="btn secondary shrink-0" aria-label="Fechar modal">✕ Fechar</button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-4 md:p-5 space-y-4">
+      <div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+        <label class="block"><span class="meta block mb-1.5">Número</span><input id="editModalNumber" type="number" min="1" class="field"></label>
+        <label class="block"><span class="meta block mb-1.5">Especialidade</span><input id="editModalSpecialty" list="editModalSpecialtyList" class="field" placeholder="Ex.: Clínica Médica"></label>
+        <datalist id="editModalSpecialtyList">
+          <option value="Clínica Médica"></option>
+          <option value="Cirurgia"></option>
+          <option value="Ginecologia e Obstetrícia"></option>
+          <option value="Pediatria"></option>
+          <option value="Preventiva e Saúde Coletiva"></option>
+          <option value="Medicina de Família e Comunidade"></option>
+          <option value="Outras"></option>
+        </datalist>
+        <label class="block"><span class="meta block mb-1.5">Origem / Banca</span><input id="editModalInstitution" class="field" placeholder="Ex.: Revalida - INEP"></label>
+        <label class="block"><span class="meta block mb-1.5">Ano</span><input id="editModalYear" class="field" placeholder="Ex.: 2024"></label>
+      </div>
+      <div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+        <label class="block"><span class="meta block mb-1.5">Tema (Especialidade | Tema | Subtema)</span><input id="editModalTheme" class="field" placeholder="Ex.: Clínica Médica | Cardiologia | Insuficiência Cardíaca"></label>
+        <label class="block"><span class="meta block mb-1.5">Vídeo (opcional)</span><input id="editModalVideoUrl" class="field" placeholder="https://vimeo.com/..."></label>
+      </div>
+      <div>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+          <span class="meta">Enunciado (aceita imagens coladas ou enviadas)</span>
+          <button type="button" id="editModalInsertStemImg" class="btn secondary" style="padding:5px 10px;font-size:12px">🖼️ Inserir imagem no enunciado</button>
+        </div>
+        <div class="toolbar" data-toolbar="editModalStem"></div>
+        <div id="editModalStem" class="rich" contenteditable="true" data-placeholder="Digite ou cole o enunciado e imagens..."></div>
+      </div>
+      <div>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <span class="meta">Alternativas e Gabarito (marque a bolinha da correta)</span>
+          <div class="flex gap-2">
+            <button type="button" id="editModalAddOpt" class="btn secondary" style="padding:5px 10px;font-size:12px">+ Alternativa E</button>
+            <button type="button" id="editModalRemoveOpt" class="btn secondary" style="padding:5px 10px;font-size:12px">− Remover E</button>
+          </div>
+        </div>
+        <div id="editModalOptions" class="space-y-2"></div>
+      </div>
+      <div>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+          <span class="meta">Comentário do professor</span>
+          <button type="button" id="editModalInsertCommentImg" class="btn secondary" style="padding:5px 10px;font-size:12px">🖼️ Inserir imagem no comentário</button>
+        </div>
+        <div class="toolbar" data-toolbar="editModalCommentary"></div>
+        <div id="editModalCommentary" class="rich" contenteditable="true" data-placeholder="Comentário do professor..."></div>
+      </div>
+      <div id="editModalStatus" class="status hidden"></div>
+    </div>
+    <div class="flex flex-wrap items-center justify-between gap-3 p-4 md:p-5 border-t" style="border-color:var(--line)">
+      <button type="button" id="editModalOpenInEditor" class="btn secondary">✎ Abrir na aba Editor</button>
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button" id="editModalCancel" class="btn secondary">Cancelar</button>
+        <button type="button" id="editModalSave" class="btn ok">💾 Salvar alterações</button>
+      </div>
+    </div>
+  </div>
+</div>
 <input type="file" id="imageFile" accept="image/png,image/jpeg,image/gif,image/webp,image/heic,image/heif,image/*" class="hidden">
 <input type="file" id="jsonFile" accept="application/json,.json" class="hidden">
 <script>
@@ -727,7 +793,7 @@ function applyTool(cmd,format,editor,value){if(!editor)return;state.lastEditor=e
 }
 document.addEventListener('click',e=>{const img=e.target.closest('.rich img');if(!img)return;document.querySelectorAll('.rich img[data-selected-image="1"]').forEach(x=>x.removeAttribute('data-selected-image'));img.dataset.selectedImage='1';});
 document.querySelectorAll('.rich').forEach(el=>attachRichPasteHandler(el));
-$('imageFile').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const editor=$(e.target.dataset.target)||state.lastEditor||$('commentEditor');const data=await compressImageBlob(file);const range=saveSelectionRange(editor);insertHtmlAtRange(editor,range,`<img src="${data}" alt="Imagem incorporada" style="max-width:100%;height:auto;display:block;margin:10px auto;border-radius:10px">`);if(editor.id==='summaryEditor')renderSummaryPreview();else{syncCurrentForm();renderPreview();}}catch(error){alert(error.message||'Não foi possível inserir a imagem.');}e.target.value='';});
+$('imageFile').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const editor=$(e.target.dataset.target)||state.lastEditor||$('commentEditor');const data=await compressImageBlob(file);const range=saveSelectionRange(editor);insertHtmlAtRange(editor,range,`<img src="${data}" alt="Imagem incorporada" style="max-width:100%;height:auto;display:block;margin:10px auto;border-radius:10px">`);if(editor.id==='summaryEditor')renderSummaryPreview();else if(editor.id!=='editModalStem'&&editor.id!=='editModalCommentary'){syncCurrentForm();renderPreview();}}catch(error){alert(error.message||'Não foi possível inserir a imagem.');}e.target.value='';});
 function validateQuestion(q){const errors=[];if(!cleanTextFromHtml(q.stem))errors.push('enunciado');const options=q.alternatives.filter(x=>cleanTextFromHtml(x.texto));if(options.length<4)errors.push('quatro alternativas A–D');if(!q.answerKey||!q.alternatives.some(x=>x.id===q.answerKey))errors.push('gabarito válido');if(!q.theme)errors.push('tema');return errors;}
 function slug(value){return keyText(value).replace(/ /g,'-').slice(0,70)||'revalida-inep';}
 function uid(){return 'hzq_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);}
@@ -837,9 +903,165 @@ async function loadRemoteDatabase(){dbStatus('Conectando ao banco oficial…');$
  }catch(e){dbStatus(`${e.message} Confira se o Code.gs integrado foi publicado nesta implantação do Web App.`,'err');}finally{$('reloadDb').disabled=false;$('reloadDbTop').disabled=false;}}
 function renderDatabase(){const q=$('dbSearch').value.trim().toLowerCase(),specialtyFilter=$('dbSpecialtyFilter').value;const root=$('dbExamList');root.innerHTML='';const specialties=new Set();state.exams.forEach(ex=>ex.questions.forEach(item=>{const path=String(item.theme||item.tema||'').split('|').map(x=>x.trim()).filter(Boolean);const special=path[0]||item.specialty||'Não classificada';specialties.add(special);}));const select=$('dbSpecialtyFilter'),old=select.value;select.innerHTML='<option value="">Todas as especialidades</option>'+[...specialties].sort().map(x=>`<option>${esc(x)}</option>`).join('');if([...specialties].includes(old))select.value=old;
   state.exams.forEach(exam=>{const filtered=exam.questions.filter(item=>{const path=String(item.theme||item.tema||'').split('|').map(x=>x.trim());const spec=path[0]||item.specialty||'Não classificada';const hay=`${exam.title} ${exam.institution} ${item.stem||item.enunciado} ${item.theme} ${spec}`.toLowerCase();return (!q||hay.includes(q))&&(!specialtyFilter||spec===specialtyFilter);});if(!filtered.length)return;
-    const card=document.createElement('section');card.className='exam-card';const scope=exam.moduleScope||'shared';card.innerHTML=`<div class="flex flex-wrap items-start justify-between gap-3 mb-3"><div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><h2 class="text-base font-black">${esc(exam.title||'Prova sem título')}</h2><span class="pill">${scope==='database'?'SOMENTE BANCO':scope==='shared'?'COMPARTILHADA':'BQHZ'}</span></div><div class="text-xs muted mt-1">${esc(exam.institution||'Origem não informada')} ${exam.year?'· '+esc(exam.year):''} · ${exam.questions.length} questão(ões)</div></div><button class="btn danger" data-delete-exam="${esc(exam.id)}">Excluir prova inteira</button></div><div class="space-y-2">${filtered.map(item=>{const path=String(item.theme||item.tema||'').split('|').map(x=>x.trim()).filter(Boolean);return `<div class="rounded-xl p-3 flex flex-wrap items-center gap-3" style="background:#171725;border:1px solid #313148"><div class="min-w-0 flex-1"><div class="text-xs text-purple-200 font-black">Questão ${esc(item.number||'—')} · ${esc(path[0]||item.specialty||'Não classificada')}</div><div class="text-sm font-bold mt-1">${esc(cleanTextFromHtml(item.stem||item.enunciado).slice(0,170))}</div><div class="tiny muted mt-1">${esc(path.slice(1).join(' › ')||'Sem subtema')} · Gabarito ${esc(item.answerKey||item.gabarito||'—')}</div></div><button class="btn secondary" data-edit-question="${esc(exam.id)}|${esc(item.id)}">Editar</button><button class="btn danger" data-delete-question="${esc(exam.id)}|${esc(item.id)}">Excluir questão</button></div>`;}).join('')}</div>`;root.appendChild(card);
+    const card=document.createElement('section');card.className='exam-card';const scope=exam.moduleScope||'shared';card.innerHTML=`<div class="flex flex-wrap items-start justify-between gap-3 mb-3"><div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><h2 class="text-base font-black">${esc(exam.title||'Prova sem título')}</h2><span class="pill">${scope==='database'?'SOMENTE BANCO':scope==='shared'?'COMPARTILHADA':'BQHZ'}</span></div><div class="text-xs muted mt-1">${esc(exam.institution||'Origem não informada')} ${exam.year?'· '+esc(exam.year):''} · ${exam.questions.length} questão(ões)</div></div><button type="button" class="btn danger" data-delete-exam="${esc(exam.id)}">Excluir prova inteira</button></div><div class="space-y-2">${filtered.map(item=>{const qIdx=exam.questions.indexOf(item);const path=String(item.theme||item.tema||'').split('|').map(x=>x.trim()).filter(Boolean);return `<div class="rounded-xl p-3 flex flex-wrap items-center gap-3" style="background:#171725;border:1px solid #313148"><div class="min-w-0 flex-1"><div class="text-xs text-purple-200 font-black">Questão ${esc(item.number||'—')} · ${esc(path[0]||item.specialty||'Não classificada')}</div><div class="text-sm font-bold mt-1">${esc(cleanTextFromHtml(item.stem||item.enunciado).slice(0,170))}</div><div class="tiny muted mt-1">${esc(path.slice(1).join(' › ')||'Sem subtema')} · Gabarito ${esc(item.answerKey||item.gabarito||'—')}</div></div><button type="button" class="btn secondary" data-edit-question="1" data-exam-id="${esc(exam.id)}" data-question-id="${esc(item.id??'')}" data-question-index="${qIdx}">Editar</button><button type="button" class="btn danger" data-delete-question="1" data-exam-id="${esc(exam.id)}" data-question-id="${esc(item.id??'')}" data-question-index="${qIdx}">Excluir questão</button></div>`;}).join('')}</div>`;root.appendChild(card);
   });if(!root.children.length)root.innerHTML='<div class="panel p-8 text-center text-sm muted">Nenhuma questão corresponde à busca atual.</div>';}
-function loadQuestionForEdit(examId,questionId){const exam=state.exams.find(x=>String(x.id)===String(examId));if(!exam)return;const q=exam.questions.find(x=>String(x.id)===String(questionId));if(!q)return;state.editingExamId=exam.id;state.editingQuestionId=q.id;state.editingExam=JSON.parse(JSON.stringify(exam));const legacyRich=Number(q.richStyleVersion||0)<2;const normalizeLoadedRich=legacyRich?normalizeImportedQuestionRich:normalizeQuestionRich;const mapped={id:q.id,number:q.number||1,stem:normalizeLoadedRich(q.stem||q.enunciado||''),alternatives:(q.alternatives||q.options||[]).map(x=>({id:x.id||x.letter,texto:normalizeLoadedRich(x.texto||x.text||''),correta:!!x.correta})),answerKey:q.answerKey||q.gabarito||'',commentary:normalizeLoadedRich(q.commentary||q.comentario||''),videoUrl:q.videoUrl||q.vimeoUrl||'',institution:q.institution||q.instituicao||exam.institution||'',year:q.year||q.ano||exam.year||'',theme:q.theme||q.tema||'',specialty:q.specialty||'',richStyleVersion:2};while(mapped.alternatives.length<4)mapped.alternatives.push({id:String.fromCharCode(65+mapped.alternatives.length),texto:''});state.drafts=[mapped];state.index=0;$('groupTitle').value=exam.title||'';$('shareWithBqhz').checked=(exam.moduleScope||'shared')!=='database';switchTab('editor');renderForm();status(`Editando questão ${mapped.number} de “${exam.title}”. Salve para publicar a alteração.`,'warn');}
+function resolveExamAndQuestion(examId,questionId,questionIndex){
+  const exam=state.exams.find(x=>String(x.id)===String(examId));
+  if(!exam)return {exam:null,q:null,index:-1};
+  let idx=-1;
+  if(questionId!==undefined&&questionId!==null&&String(questionId)!==''){
+    idx=exam.questions.findIndex(x=>String(x.id??'')===String(questionId));
+  }
+  if(idx<0&&Number.isInteger(Number(questionIndex))&&Number(questionIndex)>=0&&Number(questionIndex)<exam.questions.length){
+    idx=Number(questionIndex);
+  }
+  return {exam,q:idx>=0?exam.questions[idx]:null,index:idx};
+}
+function mapQuestionForEditing(q,exam){
+  const legacyRich=Number(q.richStyleVersion||0)<2;
+  const normalizeLoadedRich=legacyRich?normalizeImportedQuestionRich:normalizeQuestionRich;
+  const rawOpts=Array.isArray(q.alternatives)?q.alternatives:Array.isArray(q.options)?q.options:Array.isArray(q.opcoes)?q.opcoes:[];
+  const alternatives=rawOpts.map((x,i)=>({id:String(x.id||x.letter||String.fromCharCode(65+i)).toUpperCase(),texto:normalizeLoadedRich(x.texto||x.text||''),correta:!!x.correta}));
+  while(alternatives.length<4)alternatives.push({id:String.fromCharCode(65+alternatives.length),texto:'',correta:false});
+  const answerKey=String(q.answerKey||q.gabarito||alternatives.find(x=>x.correta)?.id||'').trim().toUpperCase();
+  const theme=String(q.theme||q.tema||'').trim();
+  const firstSeg=theme.split('|').map(x=>x.trim()).filter(Boolean)[0]||'';
+  return {
+    id:q.id||'',
+    number:q.number||1,
+    stem:normalizeLoadedRich(q.stem||q.enunciado||''),
+    alternatives,
+    answerKey,
+    commentary:normalizeLoadedRich(q.commentary||q.comentario||''),
+    videoUrl:q.videoUrl||q.vimeoUrl||'',
+    institution:q.institution||q.instituicao||exam.institution||'',
+    year:q.year||q.ano||exam.year||'',
+    theme,
+    specialty:String(q.specialty||firstSeg||exam.specialty||'').trim(),
+    richStyleVersion:2
+  };
+}
+function loadQuestionForEdit(examId,questionId,questionIndex){
+  const {exam,q}=resolveExamAndQuestion(examId,questionId,questionIndex);
+  if(!exam||!q){dbStatus('Não foi possível localizar a questão selecionada para edição.','err');return;}
+  state.editingExamId=exam.id;state.editingQuestionId=q.id||'';state.editingExam=JSON.parse(JSON.stringify(exam));
+  const mapped=mapQuestionForEditing(q,exam);
+  state.drafts=[mapped];state.index=0;
+  $('groupTitle').value=exam.title||'';
+  $('shareWithBqhz').checked=(exam.moduleScope||'shared')!=='database';
+  switchTab('editor');renderForm();
+  window.scrollTo({top:0,behavior:'smooth'});
+  status(`Editando questão ${mapped.number} de “${exam.title}”. Salve para publicar a alteração.`,'warn');
+}
+const editModalState={examId:'',questionId:'',questionIndex:-1,draft:null};
+function setEditModalStatus(text,type=''){
+  const el=$('editModalStatus');if(!el)return;
+  if(!text){el.className='status hidden';el.textContent='';return;}
+  el.className=`status ${type}`;el.textContent=text;
+}
+function renderEditModalOptions(){
+  const q=editModalState.draft;const root=$('editModalOptions');if(!q||!root)return;
+  root.innerHTML='';
+  q.alternatives.forEach((opt,i)=>{
+    const row=document.createElement('div');
+    row.className='rounded-xl p-2.5 flex items-start gap-2.5';
+    row.style.background='#10101a';
+    row.style.border='1px solid var(--line)';
+    row.innerHTML=`<label class="flex items-center gap-1.5 pt-2 shrink-0 cursor-pointer"><input type="radio" name="editModalAnswerKey" value="${esc(opt.id)}" ${q.answerKey===opt.id?'checked':''}><span class="font-black text-purple-200">${esc(opt.id)})</span></label><div class="rich min-h-[58px] flex-1" contenteditable="true" data-edit-opt-index="${i}" data-placeholder="Texto da alternativa ${esc(opt.id)}..."></div>`;
+    const rich=row.querySelector('.rich');
+    rich.innerHTML=normalizeQuestionRich(opt.texto||'');
+    attachRichPasteHandler(rich);
+    rich.addEventListener('focus',e=>state.lastEditor=e.currentTarget);
+    rich.addEventListener('input',e=>{if(editModalState.draft?.alternatives[i])editModalState.draft.alternatives[i].texto=normalizeQuestionRich(e.currentTarget.innerHTML);});
+    row.querySelector('input').addEventListener('change',e=>{if(e.target.checked&&editModalState.draft)editModalState.draft.answerKey=opt.id;});
+    root.appendChild(row);
+  });
+  $('editModalAddOpt').disabled=q.alternatives.length>=5;
+  $('editModalRemoveOpt').disabled=q.alternatives.length<=4;
+}
+function syncEditModalDraft(){
+  const q=editModalState.draft;if(!q)return;
+  q.number=Math.max(1,Number($('editModalNumber').value)||1);
+  q.specialty=$('editModalSpecialty').value.trim();
+  q.institution=$('editModalInstitution').value.trim();
+  q.year=$('editModalYear').value.trim();
+  q.theme=$('editModalTheme').value.trim().replace(/\s*[|]\s*/g,' | ');
+  if(!q.theme&&q.specialty)q.theme=q.specialty;
+  if(q.specialty&&q.theme&&!q.theme.includes('|')&&keyText(q.theme)!==keyText(q.specialty)){
+    q.theme=`${q.specialty} | ${q.theme}`;
+  }
+  q.videoUrl=$('editModalVideoUrl').value.trim();
+  q.stem=normalizeQuestionRich($('editModalStem').innerHTML);
+  q.commentary=normalizeQuestionRich($('editModalCommentary').innerHTML);
+  document.querySelectorAll('[data-edit-opt-index]').forEach(el=>{
+    const i=Number(el.dataset.editOptIndex);
+    if(q.alternatives[i])q.alternatives[i].texto=normalizeQuestionRich(el.innerHTML);
+  });
+  const selected=document.querySelector('input[name="editModalAnswerKey"]:checked');
+  if(selected)q.answerKey=selected.value;
+}
+function openQuestionEditModal(examId,questionId,questionIndex){
+  const {exam,q,index}=resolveExamAndQuestion(examId,questionId,questionIndex);
+  if(!exam||!q){dbStatus('Não foi possível abrir a questão para edição. Tente recarregar o banco remoto.','err');return;}
+  const mapped=mapQuestionForEditing(q,exam);
+  editModalState.examId=String(exam.id);
+  editModalState.questionId=String(q.id||'');
+  editModalState.questionIndex=index;
+  editModalState.draft=mapped;
+  $('editModalTitle').textContent=`Editar Questão ${mapped.number}`;
+  $('editModalSubtitle').textContent=`${exam.title||'Prova'} · ${exam.institution||'Origem não informada'}`;
+  $('editModalNumber').value=mapped.number||1;
+  $('editModalSpecialty').value=mapped.specialty||'';
+  $('editModalInstitution').value=mapped.institution||'';
+  $('editModalYear').value=mapped.year||'';
+  $('editModalTheme').value=mapped.theme||'';
+  $('editModalVideoUrl').value=mapped.videoUrl||'';
+  fillEditor('editModalStem',mapped.stem,'Digite ou cole o enunciado...');
+  fillEditor('editModalCommentary',mapped.commentary,'Comentário do professor...');
+  renderEditModalOptions();
+  setEditModalStatus('');
+  $('questionEditModal').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+}
+function closeQuestionEditModal(){
+  $('questionEditModal').classList.add('hidden');
+  document.body.style.overflow='';
+  setEditModalStatus('');
+}
+async function saveEditModalQuestion(){
+  syncEditModalDraft();
+  const q=editModalState.draft;
+  if(!q)return;
+  const errors=validateQuestion(q);
+  if(errors.length){setEditModalStatus(`Preencha os campos obrigatórios: ${errors.join(', ')}.`,'err');return;}
+  const originalExam=state.exams.find(x=>String(x.id)===String(editModalState.examId));
+  if(!originalExam){setEditModalStatus('Prova de origem não encontrada na memória. Recarregue o banco remoto.','err');return;}
+  const exam=JSON.parse(JSON.stringify(originalExam));
+  exam.questions=Array.isArray(exam.questions)?exam.questions:[];
+  exam.updatedAt=new Date().toISOString();
+  const normalized=normalizeQuestionForBackend(q,exam,q.number);
+  if(editModalState.questionId)normalized.id=editModalState.questionId;
+  let at=editModalState.questionId?exam.questions.findIndex(x=>String(x.id??'')===String(editModalState.questionId)):-1;
+  if(at<0&&editModalState.questionIndex>=0&&editModalState.questionIndex<exam.questions.length)at=editModalState.questionIndex;
+  if(at>=0)exam.questions[at]=normalized;else exam.questions.push(normalized);
+  $('editModalSave').disabled=true;
+  setEditModalStatus('Salvando questão atualizada na planilha…','warn');
+  try{
+    const result=await apiCallWithProgress('editorSaveExam',{exam},progress=>{
+      setEditModalStatus(`${progress.label} (${progress.percent??92}%)`,'warn');
+    },240000);
+    if(!result?.ok)throw new Error(result?.error||'O servidor não confirmou a gravação da questão.');
+    const examIdx=state.exams.findIndex(x=>String(x.id)===String(exam.id));
+    if(examIdx>=0)state.exams[examIdx]=exam;
+    renderDatabase();
+    dbStatus(`Questão ${normalized.number} de “${exam.title}” atualizada com sucesso na planilha.`,'ok');
+    closeQuestionEditModal();
+  }catch(error){
+    setEditModalStatus(error?.message||'Não foi possível salvar a alteração.','err');
+  }finally{
+    $('editModalSave').disabled=false;
+  }
+}
 async function saveDrafts(){
   syncCurrentForm();
   if(!state.drafts.length){status('Não há questões para enviar.','warn');return;}
@@ -905,7 +1127,51 @@ $('parseText').addEventListener('click',parsePastedText);$('clearPaste').addEven
 $('stemEditor').addEventListener('input',()=>{syncCurrentForm();});$('commentEditor').addEventListener('input',()=>{syncCurrentForm();});$('stemEditor').addEventListener('focus',e=>state.lastEditor=e.currentTarget);$('commentEditor').addEventListener('focus',e=>state.lastEditor=e.currentTarget);
 ['questionNumber','sourceName','year','themePath','videoUrl','groupTitle'].forEach(id=>$(id).addEventListener('input',()=>syncCurrentForm()));$('shareWithBqhz').addEventListener('change',()=>{});
 $('refreshPreview').addEventListener('click',renderPreview);$('togglePreviewAnswer').addEventListener('click',()=>{state.previewAnswered=true;renderPreview();});$('hidePreviewAnswer').addEventListener('click',()=>{state.previewAnswered=false;renderPreview();});$('saveQuestions').addEventListener('click',saveDrafts);$('newQuestion').addEventListener('click',addQuestion);$('validateQuestion').addEventListener('click',validateAll);$('reloadDb').addEventListener('click',loadRemoteDatabase);$('reloadDbTop').addEventListener('click',loadRemoteDatabase);$('dbSearch').addEventListener('input',renderDatabase);$('dbSpecialtyFilter').addEventListener('change',renderDatabase);
-$('dbExamList').addEventListener('click',e=>{const delExam=e.target.closest('[data-delete-exam]');if(delExam){deleteExam(delExam.dataset.deleteExam);return;}const edit=e.target.closest('[data-edit-question]');if(edit){const [examId,qId]=edit.dataset.editQuestion.split('|');loadQuestionForEdit(examId,qId);return;}const del=e.target.closest('[data-delete-question]');if(del){const [examId,qId]=del.dataset.deleteQuestion.split('|');deleteQuestion(examId,qId);}});
+$('dbExamList').addEventListener('click',e=>{
+  const delExam=e.target.closest('[data-delete-exam]');
+  if(delExam){deleteExam(delExam.dataset.deleteExam);return;}
+  const edit=e.target.closest('[data-edit-question]');
+  if(edit){openQuestionEditModal(edit.dataset.examId,edit.dataset.questionId,edit.dataset.questionIndex);return;}
+  const del=e.target.closest('[data-delete-question]');
+  if(del){deleteQuestion(del.dataset.examId,del.dataset.questionId);}
+});
+$('editModalClose').addEventListener('click',closeQuestionEditModal);
+$('editModalCancel').addEventListener('click',closeQuestionEditModal);
+$('editModalSave').addEventListener('click',saveEditModalQuestion);
+$('editModalOpenInEditor').addEventListener('click',()=>{
+  const {examId,questionId,questionIndex}=editModalState;
+  closeQuestionEditModal();
+  loadQuestionForEdit(examId,questionId,questionIndex);
+});
+$('questionEditModal').addEventListener('click',e=>{if(e.target===$('questionEditModal'))closeQuestionEditModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('questionEditModal').classList.contains('hidden'))closeQuestionEditModal();});
+$('editModalAddOpt').addEventListener('click',()=>{
+  const q=editModalState.draft;if(!q||q.alternatives.length>=5)return;
+  syncEditModalDraft();
+  q.alternatives.push({id:'E',texto:'',correta:false});
+  renderEditModalOptions();
+});
+$('editModalRemoveOpt').addEventListener('click',()=>{
+  const q=editModalState.draft;if(!q||q.alternatives.length<=4)return;
+  syncEditModalDraft();
+  const removed=q.alternatives.pop();
+  if(q.answerKey===removed.id)q.answerKey='';
+  renderEditModalOptions();
+});
+$('editModalInsertStemImg').addEventListener('click',()=>{
+  state.lastEditor=$('editModalStem');
+  saveSelectionRange($('editModalStem'));
+  const f=$('imageFile');f.dataset.target='editModalStem';f.click();
+});
+$('editModalInsertCommentImg').addEventListener('click',()=>{
+  state.lastEditor=$('editModalCommentary');
+  saveSelectionRange($('editModalCommentary'));
+  const f=$('imageFile');f.dataset.target='editModalCommentary';f.click();
+});
+$('editModalStem').addEventListener('focus',e=>state.lastEditor=e.currentTarget);
+$('editModalCommentary').addEventListener('focus',e=>state.lastEditor=e.currentTarget);
+attachRichPasteHandler($('editModalStem'));
+attachRichPasteHandler($('editModalCommentary'));
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
 $('makeImportant').addEventListener('click',()=>addTextToComment('<h3>✨ Nota de atualização ✨;</h3><div style="margin:12px 0;padding:14px;border:1px solid #b7791f;border-radius:12px;background:#fff7df;color:#5b3b0a"><strong>IMPORTANTE</strong><br>Digite a atualização, a diretriz e a data.</div>'));
 $('addExplanation').addEventListener('click',()=>addTextToComment('<h3>Explicação;</h3><p><strong>A) INCORRETA</strong> — Justifique a alternativa.</p><p><strong>B) INCORRETA</strong> — Justifique a alternativa.</p><p><strong>C) CORRETA</strong> — Explique por que está correta.</p><p><strong>D) INCORRETA</strong> — Justifique a alternativa.</p>'));
